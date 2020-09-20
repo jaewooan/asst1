@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <thread>
-
-#include "CycleTimer.h"
+#include <ostream>
+#include "../common/CycleTimer.h"
 
 typedef struct {
     float x0, x1;
@@ -34,7 +34,14 @@ void workerThreadStart(WorkerArgs * const args) {
     // to compute a part of the output image.  For example, in a
     // program that uses two threads, thread 0 could compute the top
     // half of the image and thread 1 could compute the bottom half.
-
+    float y0 = args->y0 + (args->y1-args->y0) * args->threadId / args->numThreads;
+    float y1 = args->y0 + (args->y1-args->y0) * (args->threadId + 1) / args->numThreads;
+    unsigned int height = args->height / args->numThreads;
+    mandelbrotSerial(args->x0, y0, args->x1, y1,
+                     args->width, height,
+                     0, height,
+                     args->maxIterations,
+                     args->output + args->width * height * args->threadId);
     printf("Hello world from thread %d\n", args->threadId);
 }
 
@@ -74,8 +81,7 @@ void mandelbrotThread(
         args[i].height = height;
         args[i].maxIterations = maxIterations;
         args[i].numThreads = numThreads;
-        args[i].output = output;
-      
+        args[i].output = output;      
         args[i].threadId = i;
     }
 
@@ -85,7 +91,6 @@ void mandelbrotThread(
     for (int i=1; i<numThreads; i++) {
         workers[i] = std::thread(workerThreadStart, &args[i]);
     }
-    
     workerThreadStart(&args[0]);
 
     // join worker threads

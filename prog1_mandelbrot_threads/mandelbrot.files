@@ -1,0 +1,3 @@
+main.cpp
+mandelbrotSerial.cpp
+mandelbrotThread.cpp

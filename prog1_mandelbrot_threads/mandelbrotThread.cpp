@@ -34,14 +34,12 @@ void workerThreadStart(WorkerArgs * const args) {
     // to compute a part of the output image.  For example, in a
     // program that uses two threads, thread 0 could compute the top
     // half of the image and thread 1 could compute the bottom half.
-    float y0 = args->y0 + (args->y1-args->y0) * args->threadId / args->numThreads;
-    float y1 = args->y0 + (args->y1-args->y0) * (args->threadId + 1) / args->numThreads;
     unsigned int height = args->height / args->numThreads;
-    mandelbrotSerial(args->x0, y0, args->x1, y1,
-                     args->width, height,
-                     0, height,
+    mandelbrotSerial(args->x0, args->y0, args->x1, args->y1,
+                     args->width, args->height,
+                     height*args->threadId, height,
                      args->maxIterations,
-                     args->output + args->width * height * args->threadId);
+                     args->output);
     printf("Hello world from thread %d\n", args->threadId);
 }
 
@@ -54,7 +52,7 @@ void mandelbrotThread(
     int numThreads,
     float x0, float y0, float x1, float y1,
     int width, int height,
-    int maxIterations, int output[])
+    int maxIterations, int output[], int output_serial[])
 {
     static constexpr int MAX_THREADS = 32;
 
@@ -63,7 +61,6 @@ void mandelbrotThread(
         fprintf(stderr, "Error: Max allowed threads is %d\n", MAX_THREADS);
         exit(1);
     }
-
     // Creates thread objects that do not yet represent a thread.
     std::thread workers[MAX_THREADS];
     WorkerArgs args[MAX_THREADS];

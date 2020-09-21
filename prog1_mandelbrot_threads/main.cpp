@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <getopt.h>
 
-#include "CycleTimer.h"
+#include "../common/CycleTimer.h"
 
 extern void mandelbrotSerial(
     float x0, float y0, float x1, float y1,
@@ -16,7 +16,7 @@ extern void mandelbrotThread(
     float x0, float y0, float x1, float y1,
     int width, int height,
     int maxIterations,
-    int output[]);
+    int output[], int output_serial[]);
 
 extern void writePPMImage(
     int* data,
@@ -136,23 +136,18 @@ int main(int argc, char** argv) {
         minSerial = std::min(minSerial, endTime - startTime);
     }
 
-    printf("[mandelbrot serial]:\t\t[%.3f] ms\n", minSerial * 1000);
     writePPMImage(output_serial, width, height, "mandelbrot-serial.ppm", maxIterations);
-
     //
     // Run the threaded version
     //
-
     double minThread = 1e30;
     for (int i = 0; i < 5; ++i) {
       memset(output_thread, 0, width * height * sizeof(int));
         double startTime = CycleTimer::currentSeconds();
-        mandelbrotThread(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_thread);
+        mandelbrotThread(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_thread, output_serial);
         double endTime = CycleTimer::currentSeconds();
         minThread = std::min(minThread, endTime - startTime);
     }
-
-    printf("[mandelbrot thread]:\t\t[%.3f] ms\n", minThread * 1000);
     writePPMImage(output_thread, width, height, "mandelbrot-thread.ppm", maxIterations);
 
     if (! verifyResult (output_serial, output_thread, width, height)) {

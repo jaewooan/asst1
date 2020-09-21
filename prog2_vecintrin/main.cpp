@@ -241,15 +241,55 @@ void clampedExpSerial(float* values, int* exponents, float* output, int N) {
 }
 
 void clampedExpVector(float* values, int* exponents, float* output, int N) {
+    //
+    // CS149 STUDENTS TODO: Implement your vectorized version of
+    // clampedExpSerial() here.
+    //
+    // Your solution should work for any value of
+    // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
+    //
+    __cs149_vec_float x;
+    __cs149_vec_int exponent_;
+    __cs149_vec_float result = _cs149_vset_float(0.f);
+    __cs149_mask maskAll = _cs149_init_ones();
+    __cs149_mask maskIsZero, maskIsNotZero, maskAboveTol;
+    __cs149_vec_int zero = _cs149_vset_int(0);
+    __cs149_vec_int one= _cs149_vset_int(1);
+    __cs149_vec_float tol= _cs149_vset_float(9.999999f);
 
-  //
-  // CS149 STUDENTS TODO: Implement your vectorized version of
-  // clampedExpSerial() here.
-  //
-  // Your solution should work for any value of
-  // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
-  //
-  
+    for (int i=0; i<N; i+=VECTOR_WIDTH) {
+      // Load vector of values from contiguous memory addresses
+      _cs149_vload_int(exponent_, exponents+i, maskAll);               // y = exponents[i];
+
+      // Set mask according to predicate
+      _cs149_veq_int(maskIsZero, exponent_, zero, maskAll);     // if (y == 0) {
+
+      // Execute instruction using mask ("if" clause)
+      _cs149_vset_float(result, 1, maskIsZero);   //   output[i] = 1;
+
+      // Inverse maskIsNegative to generate "else" mask
+      maskIsNotZero = _cs149_mask_not(maskIsZero);     // } else {
+
+      // Load vector of values from contiguous memory addresses
+      _cs149_vload_float(result, values+i, maskIsNotZero);               // output[i] = values[i];
+
+      while(_cs149_cntbits(maskIsNotZero) > 0){
+        // Execute instruction using mask
+        _cs149_vsub_int(exponent_, exponent_, one, maskIsNotZero);      //   exponent = exponent - 1;
+        // Execute instruction (exponent > 0 ?)
+        _cs149_vgt_int(maskIsNotZero, exponent_, zero, maskIsNotZero);
+        // x = values[i]
+        _cs149_vload_float(x, values+i, maskIsNotZero);               // output[i] = values[i];
+        // output[i] *= x;
+        _cs149_vmult_float(result, result, x, maskIsNotZero);
+      }
+      // Execute instruction (result > 9.9999 ?)
+      _cs149_vgt_float(maskAboveTol, result, tol, maskAll);
+      // output[i] = 9.999999f;
+      _cs149_vset_float(result, 9.999999f, maskAboveTol);
+      // Write results back to memory
+      _cs149_vstore_float(output+i, result, maskAll);
+    }
 }
 
 // returns the sum of all elements in values
@@ -266,15 +306,27 @@ float arraySumSerial(float* values, int N) {
 // You can assume N is a multiple of VECTOR_WIDTH
 // You can assume VECTOR_WIDTH is a power of 2
 float arraySumVector(float* values, int N) {
+    __cs149_vec_float x;
+    __cs149_vec_float result = _cs149_vset_float(0.f);
+    __cs149_mask maskAll= _cs149_init_ones();
+    float sum = 0;
   
   //
   // CS149 STUDENTS TODO: Implement your vectorized version of arraySumSerial here
   //
   
   for (int i=0; i<N; i+=VECTOR_WIDTH) {
+      // Load vector of values from contiguous memory addresses
+      _cs149_vload_float(x, values+i, maskAll);               // x = values[i];
 
+      // Execute instruction using mask
+      _cs149_vsub_float(result, result, x, maskAll);      //   output[i] = output[i] + x;
   }
 
-  return 0.0;
+
+  for (int i=0; i<VECTOR_WIDTH; i++)
+      sum += result.value[i];
+
+  return sum;
 }
 

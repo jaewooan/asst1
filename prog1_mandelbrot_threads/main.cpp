@@ -136,6 +136,7 @@ int main(int argc, char** argv) {
         minSerial = std::min(minSerial, endTime - startTime);
     }
 
+    printf("[mandelbrot serial]:\t\t[%.3f] ms\n", minSerial * 1000);
     writePPMImage(output_serial, width, height, "mandelbrot-serial.ppm", maxIterations);
     //
     // Run the threaded version
@@ -148,6 +149,7 @@ int main(int argc, char** argv) {
         double endTime = CycleTimer::currentSeconds();
         minThread = std::min(minThread, endTime - startTime);
     }
+    printf("[mandelbrot thread]:\t\t[%.3f] ms\n", minThread * 1000);
     writePPMImage(output_thread, width, height, "mandelbrot-thread.ppm", maxIterations);
 
     if (! verifyResult (output_serial, output_thread, width, height)) {

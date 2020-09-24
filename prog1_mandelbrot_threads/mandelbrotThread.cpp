@@ -37,7 +37,7 @@ void workerThreadStart(WorkerArgs * const args) {
     unsigned int height = args->height / args->numThreads;
     mandelbrotSerial(args->x0, args->y0, args->x1, args->y1,
                      args->width, args->height,
-                     height*args->threadId, height,
+                     height * args->threadId, height,
                      args->maxIterations,
                      args->output);
     printf("Hello world from thread %d\n", args->threadId);

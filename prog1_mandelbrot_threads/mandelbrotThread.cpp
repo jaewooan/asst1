@@ -34,6 +34,8 @@ void workerThreadStart(WorkerArgs * const args) {
     // to compute a part of the output image.  For example, in a
     // program that uses two threads, thread 0 could compute the top
     // half of the image and thread 1 could compute the bottom half.
+    printf("Hello world from thread %d\n", args->threadId);
+    double startTime = CycleTimer::currentSeconds();
     unsigned int height = args->height / args->numThreads;
     unsigned int startRow = height * args->threadId;
     if(args->threadId == args->numThreads - 1) height = args->height - startRow;
@@ -42,7 +44,8 @@ void workerThreadStart(WorkerArgs * const args) {
                      startRow, height,
                      args->maxIterations,
                      args->output);
-    printf("Hello world from thread %d\n", args->threadId);
+    double endTime = CycleTimer::currentSeconds();
+    printf("[mandelbrot thread]:\t\t[%.3f] ms\n", (endTime-startTime) * 1000);
 }
 
 //

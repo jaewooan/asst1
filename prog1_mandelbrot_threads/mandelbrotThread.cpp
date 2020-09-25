@@ -22,6 +22,12 @@ extern void mandelbrotSerial(
     int maxIterations,
     int output[]);
 
+void mandelbrotSerial2(
+    float x0, float y0, float x1, float y1,
+    int width, int height,
+    int startRow, int nRowInterval,
+    int maxIterations,
+    int output[]);
 
 //
 // workerThreadStart --
@@ -39,9 +45,14 @@ void workerThreadStart(WorkerArgs * const args) {
     unsigned int height = args->height / args->numThreads;
     unsigned int startRow = height * args->threadId;
     if(args->threadId == args->numThreads - 1) height = args->height - startRow;
-    mandelbrotSerial(args->x0, args->y0, args->x1, args->y1,
+    /*mandelbrotSerial(args->x0, args->y0, args->x1, args->y1,
                      args->width, args->height,
                      startRow, height,
+                     args->maxIterations,
+                     args->output);*/
+    mandelbrotSerial2(args->x0, args->y0, args->x1, args->y1,
+                     args->width, args->height,
+                     args->threadId, args->numThreads,
                      args->maxIterations,
                      args->output);
     double endTime = CycleTimer::currentSeconds();

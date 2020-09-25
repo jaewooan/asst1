@@ -251,15 +251,19 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
     __cs149_vec_float x;
     __cs149_vec_int exponent_;
     __cs149_vec_float result = _cs149_vset_float(0.f);
-    __cs149_mask maskAll = _cs149_init_ones();
-    __cs149_mask maskIsZero, maskIsNotZero, maskAboveTol;
     __cs149_vec_int zero = _cs149_vset_int(0);
-    __cs149_vec_int one= _cs149_vset_int(1);
+    __cs149_vec_int one = _cs149_vset_int(1);
     __cs149_vec_float tol= _cs149_vset_float(9.999999f);
 
     for (int i=0; i<N; i+=VECTOR_WIDTH) {
+        int n = (i + VECTOR_WIDTH) <= N ? VECTOR_WIDTH : (N % VECTOR_WIDTH);
+        __cs149_mask maskAll = _cs149_init_ones(n);
+        __cs149_mask maskIsZero = _cs149_init_ones(n);
+        __cs149_mask maskIsNotZero = _cs149_init_ones(n);
+        __cs149_mask maskAboveTol = _cs149_init_ones(n);
+
       // Load vector of values from contiguous memory addresses
-      _cs149_vload_int(exponent_, exponents+i, maskAll);               // y = exponents[i];
+      _cs149_vload_int(exponent_, exponents+i, maskAll);        // y = exponents[i];
 
       // Set mask according to predicate
       _cs149_veq_int(maskIsZero, exponent_, zero, maskAll);     // if (y == 0) {
@@ -267,8 +271,8 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
       // Execute instruction using mask ("if" clause)
       _cs149_vset_float(result, 1, maskIsZero);   //   output[i] = 1;
 
-      // Inverse maskIsNegative to generate "else" mask
-      maskIsNotZero = _cs149_mask_not(maskIsZero);     // } else {
+      // else
+      maskIsNotZero = _cs149_mask_not(maskIsZero);    // } else {
 
       // Load vector of values from contiguous memory addresses
       _cs149_vload_float(result, values+i, maskIsNotZero);               // output[i] = values[i];
@@ -283,6 +287,7 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
         // output[i] *= x;
         _cs149_vmult_float(result, result, x, maskIsNotZero);
       }
+
       // Execute instruction (result > 9.9999 ?)
       _cs149_vgt_float(maskAboveTol, result, tol, maskAll);
       // output[i] = 9.999999f;
